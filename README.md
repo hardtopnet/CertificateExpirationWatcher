@@ -3,6 +3,9 @@
 This lightweight program is designed to run in the background. Ideally as a docker container.  
 It periodically checks specific website certificates to warn the user of their impending expiration.  
 
+> The reason I developed this is because LetsEncrypt stopped sending expiration warning emails to free users.
+> I wanted something very simple and easy to configure to receive notice of upcoming certificate expiration
+
 ## Features
 
 - Can watch multiple websites
