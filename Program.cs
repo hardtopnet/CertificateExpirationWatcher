@@ -12,16 +12,19 @@ namespace CertificateExpirationWatcher
 {
     class Program
     {
+        private const string ConfigFileName = "config.json";
+        private const int delayInHours = 12;
+        private const int timeoutInSeconds = 3;
+
         static async Task Main(string[] args)
         {
-            string configFilePath = "config.json";
-            if (!File.Exists(configFilePath))
+            if (!File.Exists(ConfigFileName))
             {
                 Console.WriteLine("Configuration file not found.");
                 return;
             }
 
-            var configData = JsonSerializer.Deserialize<ConfigData>(await File.ReadAllTextAsync(configFilePath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var configData = JsonSerializer.Deserialize<ConfigData>(await File.ReadAllTextAsync(ConfigFileName), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (configData == null || configData.Watchers == null || configData.Watchers.Length == 0)
             {
                 Console.WriteLine("No configurations found.");
@@ -36,10 +39,10 @@ namespace CertificateExpirationWatcher
                 }
 
                 // Save the updated configuration back to the file
-                await File.WriteAllTextAsync(configFilePath, JsonSerializer.Serialize(configData, new JsonSerializerOptions { WriteIndented = true }));
+                await File.WriteAllTextAsync(ConfigFileName, JsonSerializer.Serialize(configData, new JsonSerializerOptions { WriteIndented = true }));
 
-                // Wait for 43200 seconds (12 hours) before the next check
-                await Task.Delay(TimeSpan.FromSeconds(43200));
+                // Wait before the next check
+                await Task.Delay(TimeSpan.FromHours(delayInHours));
             }
         }
 
@@ -55,7 +58,7 @@ namespace CertificateExpirationWatcher
                     return true; // Accept all certificates
                 };
 
-                using (HttpClient client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(3) })
+                using (HttpClient client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(timeoutInSeconds) })
                 {
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
 
