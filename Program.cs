@@ -48,6 +48,8 @@ namespace CertificateExpirationWatcher
 
         static async Task CheckCertificateExpiration(WatcherConfig config, EmailSettings emailSettings)
         {
+            string domainRoot = new Uri(config.url).GetLeftPart(UriPartial.Authority);
+
             using (HttpClientHandler handler = new HttpClientHandler())
             {
                 X509Certificate2 serverCertificate = null;
@@ -69,29 +71,29 @@ namespace CertificateExpirationWatcher
                         {
                             if (serverCertificate == null)
                             {
-                                config.latest = $"No server certificate found for {config.url}";
+                                config.latest = $"No server certificate found for {domainRoot}";
                                 Console.WriteLine(config.latest);
                                 return;
                             }
 
                             DateTime expirationDate = serverCertificate.NotAfter;
                             config.expiration = expirationDate.ToString("o");
-                            Console.WriteLine($"Certificate expiration date for {config.url} : {expirationDate}");
+                            Console.WriteLine($"Certificate expiration date for {domainRoot} : {expirationDate}");
 
                             foreach (int daysBefore in config.notification)
                             {
                                 DateTime notificationDate = expirationDate.AddDays(-daysBefore);
-                                if (DateTime.UtcNow >= notificationDate && config.latest != $"Notification sent {daysBefore} days before expiration for {config.url}")
+                                if (DateTime.UtcNow >= notificationDate && config.latest != $"Notification sent {daysBefore} days before expiration for {domainRoot}")
                                 {
-                                    config.latest = $"Notification sent {daysBefore} days before expiration for {config.url}";
+                                    config.latest = $"Notification sent {daysBefore} days before expiration for {domainRoot}";
                                     Console.WriteLine(config.latest);
-                                    SendEmailNotification(emailSettings, config.url, expirationDate, daysBefore);
+                                    SendEmailNotification(emailSettings, domainRoot, expirationDate, daysBefore);
                                 }
                             }
                         }
                         else
                         {
-                            config.latest = $"Failed to retrieve the web page {config.url}. Status code: {response.StatusCode}";
+                            config.latest = $"Failed to retrieve the web page {domainRoot}. Status code: {response.StatusCode}";
                             Console.WriteLine(config.latest);
                         }
                     }
@@ -102,7 +104,7 @@ namespace CertificateExpirationWatcher
                     }
                     catch (TaskCanceledException)
                     {
-                        config.latest = $"Request timed out for {config.url}";
+                        config.latest = $"Request timed out for {domainRoot}";
                         Console.WriteLine(config.latest);
                     }
                     catch (Exception ex)
