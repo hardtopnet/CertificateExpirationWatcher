@@ -33,6 +33,7 @@ Here's the structure :
       "url": string,
       "expiration": string (DateTime),
       "notification": [number],
+      "notificationDone": [number],
       "latest": string
     }
   ]
@@ -57,6 +58,7 @@ Array - can specify multiple servers to watch
 - `url` : Url of the server to watch. Enter a valid address (i.e. should not return 4xx or 5xx error codes)
 - `expiration` : current expiration date (updated by program)
 - `notification` : Array - Days before expiration when notifications will be sent
+- `notificationDone` : Array - Notifications that have already been sent for the current expiration date (updated by program)
 - `latest` : Indicates the latest status of current watcher (updated by program)
 
 ## Building
@@ -69,6 +71,12 @@ Docker image file is provided
 
 #### Build
 `docker build -t certificate-expiration-watcher .`
+
+#### Export image
+`docker save -o certificate-expiration-watcher.tar certificate-expiration-watcher`
+
+#### Import image
+`docker load -i certificate-expiration-watcher.tar`
 
 #### Run
 `docker run -d -p 8793:8793 --name cert-watcher certificate-expiration-watcher`  
