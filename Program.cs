@@ -31,6 +31,18 @@ namespace CertificateExpirationWatcher
                 return;
             }
 
+            foreach(var config in configData.Watchers)
+            {
+                if (config.notification == null || config.notification.Count == 0)
+                {
+                    config.notification = new List<int> { 30, 15, 7, 3, 1 };
+                }
+                if (config.notificationDone == null)
+                {
+                    config.notificationDone = new List<int>();
+                }
+            }
+
             while (true)
             {
                 foreach (var config in configData.Watchers)
@@ -77,17 +89,23 @@ namespace CertificateExpirationWatcher
                             }
 
                             DateTime expirationDate = serverCertificate.NotAfter;
-                            config.expiration = expirationDate.ToString("o");
+                            string newExpiration = expirationDate.ToString("o");
+                            if(newExpiration != config.expiration)
+                            {
+                                config.notificationDone.Clear();
+                            }
+                            config.expiration = newExpiration;
                             Console.WriteLine($"Certificate expiration date for {domainRoot} : {expirationDate}");
 
                             foreach (int daysBefore in config.notification)
                             {
                                 DateTime notificationDate = expirationDate.AddDays(-daysBefore);
-                                if (DateTime.UtcNow >= notificationDate && config.latest != $"Notification sent {daysBefore} days before expiration for {domainRoot}")
+                                if (DateTime.UtcNow >= notificationDate && !config.notificationDone.Contains(daysBefore))
                                 {
                                     config.latest = $"Notification sent {daysBefore} days before expiration for {domainRoot}";
                                     Console.WriteLine(config.latest);
                                     SendEmailNotification(emailSettings, domainRoot, expirationDate, daysBefore);
+                                    config.notificationDone.Add(daysBefore);
                                 }
                             }
                         }
@@ -167,6 +185,7 @@ namespace CertificateExpirationWatcher
         public string url { get; set; }
         public string expiration { get; set; }
         public List<int> notification { get; set; }
+        public List<int> notificationDone { get; set; }
         public string latest { get; set; }
     }
 }
